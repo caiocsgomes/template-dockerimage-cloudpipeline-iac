@@ -5,10 +5,23 @@ Parameters:
     MaxLength: 100
     MinLength: 0
     NoEcho: true
-    AllowedPattern: "[a-z0-9]*"
+    # AllowedPattern: "[a-z0-9]*"
   GithubBranch:
     Type: String
     Description: "Pipeline branch"
+  GithubAccount:
+    Type: String
+    Description: "Github accound name"
+  GithubRepository:
+    Type: String
+    Description: "Github repository name"
+
+Mappings:
+  CodeBuildComputeTypeMap:
+    develop:
+      type: "BUILD_GENERAL1_SMALL"
+    prod:
+      type: "BUILD_GENERAL1_SMALL"
 
 Resources:
   Webhook:
@@ -44,7 +57,58 @@ Resources:
                 Version: "1"
               OutputArtifacts:
                 - Name: SourceCode
-              RunOrder: 1
+              Configuration:
+                Owner: !Ref GithubAccount
+                Repo: !Ref GithubRepository
+                PollForSourceChanges: false
+                Branch: !Ref GithubBranch
+                OAuthToken: !Ref GithubAuthToken
+        - Name: Build
+          Actions:
+            - Name: Build
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: "1"
+              InputArtifacts:
+                - Name: SourceCode
+              Configuration:
+                ProjectName: !Ref CodeBuildProject
+    DependsOn: EcrRepository
+
+  CodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      Description: "Codebuild project to push flask api image to ecr"
+      Environment:
+        ComputeType:
+          !FindInMap [CodeBuildComputeTypeMap, !Ref GithubBranch, type]
+        EnvironmentVariables:
+          - Name: AWS_DEFAULT_REGION
+            Value: !Ref AWS::Region
+          - Name: AWS_ACCOUNT_ID
+            Value: !Ref "AWS::AccountId"
+          - Name: AWS_ECR_REPOSITORY_URI
+            Value: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${EcrRepository}
+          - Name: IMAGE_REPO_NAME
+            Value: !Ref GithubRepository
+          - Name: IMAGE_TAG
+            Value: "latest"
+        Image: "aws/codebuild/standard:5.0"
+        PrivilegedMode: true
+        Type: "LINUX_CONTAINER"
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Source:
+        Type: "CODEPIPELINE"
+        BuildSpec: pipeline/buildspec.yml
+
+  EcrRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Ref GithubRepository
 
   PipelineRole:
     Type: AWS::IAM::Role
@@ -66,7 +130,71 @@ Resources:
                 Action:
                   - s3:GetObject
                   - s3:PutObject
-                Resource: !GetAtt ArtifactBucket.Arn
+                  - s3:ListBucket
+                Resource:
+                  - !GetAtt ArtifactBucket.Arn
+                  - !Sub ${ArtifactBucket.Arn}/*
+        - PolicyName: "StartCodeBuild"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - codebuild:StartBuild
+                  - codebuild:BatchGetBuilds
+                Resource:
+                  - !GetAtt CodeBuildProject.Arn
+
+  CodeBuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - codebuild.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      Policies:
+        - PolicyName: "PushImageToEcr"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ecr:BatchGetImage
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:CompleteLayerUpload
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:InitiateLayerUpload
+                  - ecr:PutImage
+                  - ecr:UploadLayerPart
+                Resource: !GetAtt EcrRepository.Arn
+        - PolicyName: "CodeBuildLogsRole"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource:
+                  - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/*"
+        - PolicyName: "GetAndPutArtifacts"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:ListBucket
+                Resource:
+                  - !GetAtt ArtifactBucket.Arn
+                  - !Sub ${ArtifactBucket.Arn}/*
 
   ArtifactBucket:
     Type: AWS::S3::Bucket
