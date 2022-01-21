@@ -1,4 +1,4 @@
-all: validate_templates create_stack
+all: validate_templates create_pipeline_stack
 
 validate_templates:
 	aws cloudformation validate-template --template-body file://pipeline/pipeline.yml
