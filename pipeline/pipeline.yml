@@ -97,7 +97,7 @@ Resources:
             Value: !Ref GithubRepository
           - Name: IMAGE_TAG
             Value: "latest"
-        Image: "aws/codebuild/standard:4.0"
+        Image: "aws/codebuild/standard:5.0"
         PrivilegedMode: true
         Type: "LINUX_CONTAINER"
       ServiceRole: !GetAtt CodeBuildRole.Arn
@@ -171,6 +171,7 @@ Resources:
                   - ecr:InitiateLayerUpload
                   - ecr:PutImage
                   - ecr:UploadLayerPart
+                  - ecr:GetAuthorizationToken
                 Resource: "*"
         - PolicyName: "CodeBuildLogsRole"
           PolicyDocument:
