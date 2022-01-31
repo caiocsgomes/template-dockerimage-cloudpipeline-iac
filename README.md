@@ -6,7 +6,7 @@ All the pipeline is written in Cloudformation and no action on the console is ne
 
 All of the code is in this repository, and the steps to build it are at the end of this guide, on the [how to build](https://github.com/caiocsgomes/image-pipeline-cloudformation#the-ecr-repository) section.
 
-The `pipeline` folder contains the codepipeline files. ´pipeline.yml´ with the Cloudformation stack to create the pipeline, `buildspec.yml` with the Codebuild specification to build the image and push to ECR.
+The `pipeline` folder contains the codepipeline files. `pipeline.yml` with the Cloudformation stack to create the pipeline, `buildspec.yml` with the Codebuild specification to build the image and push to ECR.
 
 The `app` folder contain a simple python app that we will use as an example to build an image, our focus here is on the pipeline as code. In the next sections we will dive in each component and step required to build it.
 
