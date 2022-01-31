@@ -1,0 +1,18 @@
+[
+    {
+        "ParameterKey": "GithubAuthToken",
+        "ParameterValue": ""
+    },
+    {
+        "ParameterKey": "GithubBranch",
+        "ParameterValue": ""
+    },
+    {
+        "ParameterKey": "GithubAccount",
+        "ParameterValue": ""
+    },
+    {
+        "ParameterKey": "GithubRepository",
+        "ParameterValue": ""
+    }
+]
