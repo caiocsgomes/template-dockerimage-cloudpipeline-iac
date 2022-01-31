@@ -10,6 +10,8 @@ Since github will trigger the pipeline when it detects code changes, we need to 
 
 The `AWS::CodePipeline::Webhook` resource is able to provision the github webhook and register it for you, the only necessary action is to create it on github. For the scopes (permissions) select *admin:repo_hook* and *repo*, it should look like this:
 
+![webhook permissions](https://github.com/caiocsgomes/image-pipeline-cloudformation/blob/media/webhook_permission.png)
+
 ## The ECR Repository
 
 ## The artifacts bucket
