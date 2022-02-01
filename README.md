@@ -121,7 +121,7 @@ CodeBuildProject:
       BuildSpec: pipeline/buildspec.yml
 ```
 
-Another important file is the [*buildspec.yml*](https://docs.aws.amazon.com/codebuild/latest/userguide/build-spec-ref.html). Inside it we define everything we need to do on the code to build it. So in our case we take the code, build the image and push it eo ECR. All of the variables we are using come from the *CodeBuild* project on the *CloudFormation* template.
+Another important file is the [*buildspec.yml*](https://docs.aws.amazon.com/codebuild/latest/userguide/build-spec-ref.html). Inside it we define everything we need to do on the code to build it. So in our case we take the code, build the image and push it to ECR. All of the variables we are using come from the *CodeBuild* project on the *CloudFormation* template.
 
 ``` yml
 version: 0.2
@@ -147,11 +147,11 @@ phases:
 
 ## The artifacts bucket
 
-## The buildspec file
+Artifacts are anything produced by CodePipeline like source code, built applications, etc. CodePipeline moves artifacts between stages. In our case the first stage produces an artifact that is our source code and the second stage uses it to build the application. Since we need storage to do this we need an S3 bucket that will store all the artifacts produced by CodePipeline.
 
 ## How to build it
 
-These are the commands to be executed at the root of the project to create, update and delete the pipeline. You need to have the [aws cli](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html) configured to run them.
+These are the commands to be executed at the root of the project to create, update and delete the pipeline. You need to have the [aws cli](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html) configured to run them, and also replace the *parameters.json* with your variables.
 
 ```bash
 # create the stack
